@@ -11,8 +11,8 @@ def render_tab(df):
 
                         html.Div([html.Div([dcc.Graph(id='pie-prod-cat',figure=fig)],style={'width':'50%'}),
                         html.Div([dcc.Dropdown(id='prod_dropdown',
-                                    options=[{'label':prod_cat,'value':prod_cat} for prod_cat in df['prod_cat'].unique()],
-                                    value=df['prod_cat'].unique()[0]),
+                                        options=[{'label':prod_cat,'value':prod_cat} for prod_cat in df['prod_cat'].unique()],
+                                        value=df['prod_cat'].unique()[0]),
                                     dcc.Graph(id='barh-prod-subcat')],style={'width':'50%'})],style={'display':'flex'}),
                                     html.Div(id='temp-out')
                         ])

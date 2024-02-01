@@ -164,7 +164,7 @@ def tab3_bar_sales(start_date,end_date):
 
 @app.callback(Output('heatmap-pipes','figure'),
             [Input('pipes-range','start_date'),Input('pipes-range','end_date')])
-def tab3_heatmap_sales(start_date,end_date):
+def tab3_heatmap_sales(start_date,end_date): #docelowo tu ma być heatmapa, ale nie wychodzi mi przygotowaie danych
 
     truncated = df.merged[(df.merged['tran_date']>=start_date)&(df.merged['tran_date']<=end_date)]
     grouped = truncated[truncated['total_amt']>0].groupby('country')['total_amt'].sum().round(2)
