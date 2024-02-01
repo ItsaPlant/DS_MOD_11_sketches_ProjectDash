@@ -7,8 +7,9 @@ from dash import html
 from dash.dependencies import Input, Output
 import dash_auth
 import plotly.graph_objects as go
-import tab1
-import tab2
+import tab1_1 as tab1
+import tab2_2 as tab2
+import tab3_3 as tab3
 
 
 
@@ -34,6 +35,7 @@ class db:
                 return dt.datetime.strptime(x,'%d/%m/%Y')
 
         transactions['tran_date'] = transactions['tran_date'].apply(lambda x: convert_dates(x))
+        
 
         return transactions
 
@@ -48,6 +50,9 @@ class db:
         df = df.join(self.customers.join(self.cc,on='country_code')
         .set_index('customer_Id'),on='cust_id')
 
+        df['weekday'] = df['tran_date'].dt.dayofweek
+
+
         self.merged = df
 
 
@@ -59,7 +64,7 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 #init the app
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-#dashboardy
+#dashboardy trzy
 app.layout = html.Div([html.Div([dcc.Tabs(id='tabs',value='tab-1',children=[
                             dcc.Tab(label='Sprzedaż globalna',value='tab-1'),
                             dcc.Tab(label='Produkty',value='tab-2'),
@@ -84,8 +89,6 @@ def render_content(tab):
 ## tab1 callbacks
 @app.callback(Output('bar-sales','figure'),
     [Input('sales-range','start_date'),Input('sales-range','end_date')])
-
-
 def tab1_bar_sales(start_date,end_date):
 
     truncated = df.merged[(df.merged['tran_date']>=start_date)&(df.merged['tran_date']<=end_date)]
@@ -139,29 +142,29 @@ def tab2_barh_prod_subcat(chosen_cat):
 
 
 ## tab3 callbacks
-@app.callback(Output('bar-pipe','figure'),
-    [Input('sales-range','start_date'),Input('sales-range','end_date')])
-
-
-def tab1_bar_sales(start_date,end_date):
+@app.callback(Output('bar-pipes','figure'),
+    [Input('pipes-range','start_date'),Input('pipes-range','end_date')])
+def tab3_bar_sales(start_date,end_date):
 
     truncated = df.merged[(df.merged['tran_date']>=start_date)&(df.merged['tran_date']<=end_date)]
-    grouped = truncated[truncated['total_amt']>0].groupby([pd.Grouper(key='tran_date',freq='M'),'Store_type'])['total_amt'].sum().round(2).unstack()
+
+    grouped = truncated.groupby(['weekday', 'Store_type'])['total_amt'].sum().unstack()
 
     traces = []
     for col in grouped.columns:
-        traces.append(go.Bar(x=grouped.index,y=grouped[col],name=col,hoverinfo='text',
-        hovertext=[f'{y/1e3:.2f}k' for y in grouped[col].values]))
+        traces.append(go.Bar(x=grouped.index,y=grouped[col],name=col,#hoverinfo='text',
+        #hovertext=[f'{y/1e3:.2f}k' for y in grouped[col].values]
+        ))
 
     data = traces
-    fig = go.Figure(data=data,layout=go.Layout(title='Przychody',barmode='stack',legend=dict(x=0,y=-0.5)))
+    fig = go.Figure(data=data,layout=go.Layout(title='Przychody by day, tylko jak zmapować dni do liczb?)))',barmode='stack',legend=dict(x=0,y=-0.5)))
 
     return fig
 
 
-@app.callback(Output('choropleth-pipe','figure'),
-            [Input('sales-range','start_date'),Input('sales-range','end_date')])
-def tab1_choropleth_sales(start_date,end_date):
+@app.callback(Output('heatmap-pipes','figure'),
+            [Input('pipes-range','start_date'),Input('pipes-range','end_date')])
+def tab3_heatmap_sales(start_date,end_date):
 
     truncated = df.merged[(df.merged['tran_date']>=start_date)&(df.merged['tran_date']<=end_date)]
     grouped = truncated[truncated['total_amt']>0].groupby('country')['total_amt'].sum().round(2)
@@ -175,8 +178,6 @@ def tab1_choropleth_sales(start_date,end_date):
     return fig
 
 USERNAME_PASSWORD = [['user','pass']]
-
-#app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 auth = dash_auth.BasicAuth(app,USERNAME_PASSWORD)
 
