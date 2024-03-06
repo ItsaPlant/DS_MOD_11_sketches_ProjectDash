@@ -50,7 +50,13 @@ class db:
         df = df.join(self.customers.join(self.cc,on='country_code')
         .set_index('customer_Id'),on='cust_id')
 
-        df['weekday'] = df['tran_date'].dt.dayofweek
+        df['weekday'] = df['tran_date'].dt.dayofweek.map({0: 'Poniedzialek',
+                                                          1: 'Wtorek',
+                                                          2: 'Sroda',
+                                                          3: 'Czwartek',
+                                                          4: 'Piatek',
+                                                          5: 'Sobota',
+                                                          6: 'Niedziela'})
 
 
         self.merged = df
@@ -157,16 +163,18 @@ def tab3_bar_sales(start_date,end_date):
         ))
 
     data = traces
-    fig = go.Figure(data=data,layout=go.Layout(title='Przychody by day, tylko jak zmapować dni do liczb?)))',barmode='stack',legend=dict(x=0,y=-0.5)))
+    fig = go.Figure(data=data,layout=go.Layout(title='income by weekday and store type',barmode='stack',legend=dict(x=0,y=-0.5)))
 
     return fig
 
 
 @app.callback(Output('heatmap-pipes','figure'),
-            [Input('pipes-range','start_date'),Input('pipes-range','end_date')])
-def tab3_heatmap_sales(start_date,end_date): #docelowo tu ma być heatmapa, ale nie wychodzi mi przygotowaie danych
+            [Input('pipes-range','start_date'),Input('pipes-range','end_date'), Input('prod_dropdown','value')])
+def tab3_heatmap_sales(start_date,end_date, shop_cat): #docelowo tu ma być heatmapa, ale nie wychodzi mi przygotowaie danych
 
     truncated = df.merged[(df.merged['tran_date']>=start_date)&(df.merged['tran_date']<=end_date)]
+    truncated = truncated.loc[truncated['Store_type'] == shop_cat]
+
     grouped = truncated[truncated['total_amt']>0].groupby('country')['total_amt'].sum().round(2)
 
     trace0 = go.Choropleth(colorscale='Viridis',reversescale=True,
